@@ -15,22 +15,44 @@
 {
   description = "Proof of concept for code-as-code";
   inputs = rec {
-    flake-utils = {
-      url = "github:numtide/flake-utils/v1.0.0";
+    flake-utils = { url = "github:numtide/flake-utils/v1.0.0"; };
+    nixos = { url = "github:NixOS/nixpkgs/24.05"; };
+    pythoneda-shared-git-github = {
+      url = "github:pythoneda-shared-git-def/github/0.0.7";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.nixos.follows = "nixos";
+      inputs.pythoneda-shared-git-shared.follows =
+        "pythoneda-shared-git-shared";
+      inputs.pythoneda-shared-pythonlang-banner.follows =
+        "pythoneda-shared-pythonlang-banner";
+      inputs.pythoneda-shared-pythonlang-domain.follows =
+        "pythoneda-shared-pythonlang-domain";
     };
-    nixos = {
-      url = "github:NixOS/nixpkgs/23.11";
+    pythoneda-shared-git-shared = {
+      url = "github:pythoneda-shared-git-def/shared/0.0.41";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.nixos.follows = "nixos";
+      inputs.pythoneda-shared-pythonlang-banner.follows =
+        "pythoneda-shared-pythonlang-banner";
+      inputs.pythoneda-shared-pythonlang-domain.follows =
+        "pythoneda-shared-pythonlang-domain";
     };
-    pythoneda-shared-banner = {
+    pythoneda-shared-pythonlang-banner = {
       url = "github:pythoneda-shared-pythonlang-def/banner/0.0.49";
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixos.follows = "nixos";
     };
-    pythoneda-shared-domain = {
-      url = "github:pythoneda-shared-def/domain/0.0.36";
+    pythoneda-shared-pythonlang-domain = {
+      url = "github:pythoneda-shared-def/domain/0.0.37";
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixos.follows = "nixos";
-      inputs.pythoneda-shared-banner.follows = "pythoneda-shared-banner";
+      inputs.pythoneda-shared-pythonlang-banner.follows =
+        "pythoneda-shared-pythonlang-banner";
+    };
+    stringtemplate3 = {
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.nixos.follows = "nixos";
+      url = "github:rydnr/nix-flakes/stringtemplate3-3.1?dir=stringtemplate3";
     };
   };
   outputs = inputs:
@@ -54,7 +76,7 @@
         description = "Proof of concept for code-as-code";
         license = pkgs.lib.licenses.gpl3;
         homepage = "https://github.com/${org}/${repo}";
-        maintainers = [ "rydnr <github@acm-sl.org>"  ];
+        maintainers = [ "rydnr <github@acm-sl.org>" ];
         archRole = "B";
         space = "D";
         layer = "D";
@@ -63,7 +85,9 @@
           builtins.replaceStrings [ "\n" ] [ "" ] "nixos-${nixosVersion}";
         shared = import "${pythoneda-shared-pythonlang-banner}/nix/shared.nix";
         pkgs = import nixos { inherit system; };
-        poccac-for = { python , pythoneda-shared-banner , pythoneda-shared-domain  }:
+        pythoneda-sandbox-poccac-for = { python, pythoneda-shared-git-github
+          , pythoneda-shared-git-shared, pythoneda-shared-pythonlang-banner
+          , pythoneda-shared-pythonlang-domain, stringtemplate3 }:
           let
             pnameWithUnderscores =
               builtins.replaceStrings [ "-" ] [ "_" ] pname;
@@ -83,13 +107,20 @@
               authors = builtins.concatStringsSep ","
                 (map (item: ''"${item}"'') maintainers);
               desc = description;
+              hypothesis = python.pkgs.hypothesis.version;
               inherit homepage pname pythonMajorMinorVersion pythonpackage
                 version;
-              pythonedaSharedBanner = pythoneda-shared-banner.version;
-              pythonedaSharedDomain = pythoneda-shared-domain.version;
-
+              pythonedaSharedGitGithub = pythoneda-shared-git-github.version;
+              pythonedaSharedGitShared = pythoneda-shared-git-shared.version;
+              pythonedaSharedPythonlangBanner =
+                pythoneda-shared-pythonlang-banner.version;
+              pythonedaSharedPythonlangDomain =
+                pythoneda-shared-pythonlang-domain.version;
+              pytest = python.pkgs.pytest.version;
+              pytestAsyncio = python.pkgs.pytest-asyncio.version;
               package = builtins.replaceStrings [ "." ] [ "/" ] pythonpackage;
               src = pyprojectTemplateFile;
+              stringtemplate3 = stringtemplate3.version;
             };
             bannerTemplateFile =
               "${pythoneda-shared-pythonlang-banner}/templates/banner.py.template";
@@ -115,8 +146,10 @@
               inherit homepage maintainers org python repo version;
               pescio_space = space;
               python_version = pythonMajorMinorVersion;
-              pythoneda_shared_pythonlang_banner = pythoneda-shared-pythonlang-banner;
-              pythoneda_shared_pythonlang_domain = pythoneda-shared-pythonlang-domain;
+              pythoneda_shared_pythonlang_banner =
+                pythoneda-shared-pythonlang-banner;
+              pythoneda_shared_pythonlang_domain =
+                pythoneda-shared-pythonlang-domain;
               src = entrypointTemplateFile;
             };
             src = pkgs.fetchFromGitHub {
@@ -129,9 +162,14 @@
 
             nativeBuildInputs = with python.pkgs; [ pip poetry-core ];
             propagatedBuildInputs = with python.pkgs; [
-              pythoneda-shared-banner
-              pythoneda-shared-domain
-
+              hypothesis
+              pytest
+              pytest-asyncio
+              pythoneda-shared-git-github
+              pythoneda-shared-git-shared
+              pythoneda-shared-pythonlang-banner
+              pythoneda-shared-pythonlang-domain
+              stringtemplate3
             ];
 
             # pythonImportsCheck = [ pythonpackage ];
@@ -179,36 +217,38 @@
       in rec {
         apps = rec {
           default = poccac-default;
-          poccac-default = poccac-python311;
-          poccac-python38 = shared.app-for {
-            package = self.packages.${system}.poccac-python38;
+          poccac-default = pythoneda-sandbox-poccac-python311;
+          pythoneda-sandbox-poccac-python38 = shared.app-for {
+            package = self.packages.${system}.pythoneda-sandbox-poccac-python38;
             inherit entrypoint;
           };
-          poccac-python39 = shared.app-for {
-            package = self.packages.${system}.poccac-python39;
+          pythoneda-sandbox-poccac-python39 = shared.app-for {
+            package = self.packages.${system}.pythoneda-sandbox-poccac-python39;
             inherit entrypoint;
           };
-          poccac-python310 = shared.app-for {
-            package = self.packages.${system}.poccac-python310;
+          pythoneda-sandbox-poccac-python310 = shared.app-for {
+            package =
+              self.packages.${system}.pythoneda-sandbox-poccac-python310;
             inherit entrypoint;
           };
-          poccac-python311 = shared.app-for {
-            package = self.packages.${system}.poccac-python311;
+          pythoneda-sandbox-poccac-python311 = shared.app-for {
+            package =
+              self.packages.${system}.pythoneda-sandbox-poccac-python311;
             inherit entrypoint;
           };
         };
         defaultApp = apps.default;
         defaultPackage = packages.default;
         devShells = rec {
-          default = poccac-default;
-          poccac-default = poccac-python311;
-          poccac-python38 = shared.devShell-for {
+          default = pythoneda-sandbox-poccac-default;
+          pythoneda-sandbox-poccac-default = pythoneda-sandbox-poccac-python311;
+          pythoneda-sandbox-poccac-python38 = shared.devShell-for {
             banner = "${
                 pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python38
               }/bin/banner.sh";
             extra-namespaces = "";
             nixpkgs-release = nixpkgsRelease;
-            package = packages.poccac-python38;
+            package = packages.pythoneda-sandbox-poccac-python38;
             python = pkgs.python38;
             pythoneda-shared-pythonlang-banner =
               pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python38;
@@ -216,13 +256,13 @@
               pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python38;
             inherit archRole layer org pkgs repo space;
           };
-          poccac-python39 = shared.devShell-for {
+          pythoneda-sandbox-poccac-python39 = shared.devShell-for {
             banner = "${
                 pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python39
               }/bin/banner.sh";
             extra-namespaces = "";
             nixpkgs-release = nixpkgsRelease;
-            package = packages.poccac-python39;
+            package = packages.pythoneda-sandbox-poccac-python39;
             python = pkgs.python39;
             pythoneda-shared-pythonlang-banner =
               pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python39;
@@ -230,13 +270,13 @@
               pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python39;
             inherit archRole layer org pkgs repo space;
           };
-          poccac-python310 = shared.devShell-for {
+          pythoneda-sandbox-poccac-python310 = shared.devShell-for {
             banner = "${
                 pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python310
               }/bin/banner.sh";
             extra-namespaces = "";
             nixpkgs-release = nixpkgsRelease;
-            package = packages.poccac-python310;
+            package = packages.pythoneda-sandbox-poccac-python310;
             python = pkgs.python310;
             pythoneda-shared-pythonlang-banner =
               pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python310;
@@ -244,13 +284,13 @@
               pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python310;
             inherit archRole layer org pkgs repo space;
           };
-          poccac-python311 = shared.devShell-for {
+          pythoneda-sandbox-poccac-python311 = shared.devShell-for {
             banner = "${
                 pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python311
               }/bin/banner.sh";
             extra-namespaces = "";
             nixpkgs-release = nixpkgsRelease;
-            package = packages.poccac-python311;
+            package = packages.pythoneda-sandbox-poccac-python311;
             python = pkgs.python311;
             pythoneda-shared-pythonlang-banner =
               pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python311;
@@ -260,27 +300,59 @@
           };
         };
         packages = rec {
-          default = poccac-default;
-          poccac-default = poccac-python311;
-          poccac-python38 = poccac-for {
+          default = pythoneda-sandbox-poccac-default;
+          pythoneda-sandbox-poccac-default = pythoneda-sandbox-poccac-python311;
+          pythoneda-sandbox-poccac-python38 = pythoneda-sandbox-poccac-for {
             python = pkgs.python38;
-            pythoneda-shared-banner = pythoneda-shared-banner.packages.${system}.pythoneda-shared-banner-python38;
-            pythoneda-shared-domain = pythoneda-shared-domain.packages.${system}.pythoneda-shared-domain-python38;
+            pythoneda-shared-git-github =
+              pythoneda-shared-git-github.packages.${system}.pythoneda-shared-git-github-python38;
+            pythoneda-shared-git-shared =
+              pythoneda-shared-git-shared.packages.${system}.pythoneda-shared-git-shared-python38;
+            pythoneda-shared-pythonlang-banner =
+              pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python38;
+            pythoneda-shared-pythonlang-domain =
+              pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python38;
+            stringtemplate3 =
+              stringtemplate3.packages.${system}.stringtemplate3-python38;
           };
-          poccac-python39 = poccac-for {
+          pythoneda-sandbox-poccac-python39 = pythoneda-sandbox-poccac-for {
             python = pkgs.python39;
-            pythoneda-shared-banner = pythoneda-shared-banner.packages.${system}.pythoneda-shared-banner-python39;
-            pythoneda-shared-domain = pythoneda-shared-domain.packages.${system}.pythoneda-shared-domain-python39;
+            pythoneda-shared-git-github =
+              pythoneda-shared-git-github.packages.${system}.pythoneda-shared-git-github-python39;
+            pythoneda-shared-git-shared =
+              pythoneda-shared-git-shared.packages.${system}.pythoneda-shared-git-shared-python39;
+            pythoneda-shared-pythonlang-banner =
+              pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python39;
+            pythoneda-shared-pythonlang-domain =
+              pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python39;
+            stringtemplate3 =
+              stringtemplate3.packages.${system}.stringtemplate3-python39;
           };
-          poccac-python310 = poccac-for {
+          pythoneda-sandbox-poccac-python310 = pythoneda-sandbox-poccac-for {
             python = pkgs.python310;
-            pythoneda-shared-banner = pythoneda-shared-banner.packages.${system}.pythoneda-shared-banner-python310;
-            pythoneda-shared-domain = pythoneda-shared-domain.packages.${system}.pythoneda-shared-domain-python310;
+            pythoneda-shared-git-github =
+              pythoneda-shared-git-github.packages.${system}.pythoneda-shared-git-github-python310;
+            pythoneda-shared-git-shared =
+              pythoneda-shared-git-shared.packages.${system}.pythoneda-shared-git-shared-python310;
+            pythoneda-shared-pythonlang-banner =
+              pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python310;
+            pythoneda-shared-pythonlang-domain =
+              pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python310;
+            stringtemplate3 =
+              stringtemplate3.packages.${system}.stringtemplate3-python310;
           };
-          poccac-python311 = poccac-for {
+          pythoneda-sandbox-poccac-python311 = pythoneda-sandbox-poccac-for {
             python = pkgs.python311;
-            pythoneda-shared-banner = pythoneda-shared-banner.packages.${system}.pythoneda-shared-banner-python311;
-            pythoneda-shared-domain = pythoneda-shared-domain.packages.${system}.pythoneda-shared-domain-python311;
+            pythoneda-shared-git-github =
+              pythoneda-shared-git-github.packages.${system}.pythoneda-shared-git-github-python311;
+            pythoneda-shared-git-shared =
+              pythoneda-shared-git-shared.packages.${system}.pythoneda-shared-git-shared-python311;
+            pythoneda-shared-pythonlang-banner =
+              pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python311;
+            pythoneda-shared-pythonlang-domain =
+              pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python311;
+            stringtemplate3 =
+              stringtemplate3.packages.${system}.stringtemplate3-python311;
           };
         };
       });
