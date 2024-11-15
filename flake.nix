@@ -52,7 +52,7 @@
     stringtemplate3 = {
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixos.follows = "nixos";
-      url = "github:rydnr/nix-flakes/stringtemplate3-3.1?dir=stringtemplate3";
+      url = "github:rydnr/nix-flakes/stringtemplate3-3.1b?dir=stringtemplate3";
     };
   };
   outputs = inputs:
