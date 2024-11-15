@@ -102,8 +102,8 @@
           in python.pkgs.buildPythonPackage rec {
             inherit pname version;
             projectDir = ./.;
-            pyprojectTemplateFile = ./pyprojecttoml.template;
-            pyprojectTemplate = pkgs.substituteAll {
+            pyprojectTomlTemplate = ./templates/pyproject.toml.template;
+            pyprojectToml = pkgs.substituteAll {
               authors = builtins.concatStringsSep ","
                 (map (item: ''"${item}"'') maintainers);
               desc = description;
@@ -119,7 +119,7 @@
               pytest = python.pkgs.pytest.version;
               pytestAsyncio = python.pkgs.pytest-asyncio.version;
               package = builtins.replaceStrings [ "." ] [ "/" ] pythonpackage;
-              src = pyprojectTemplateFile;
+              src = pyprojectTomlTemplate;
               stringtemplate3 = stringtemplate3.version;
             };
             bannerTemplateFile =
@@ -178,7 +178,7 @@
               cp -r ${src} .
               sourceRoot=$(ls | grep -v env-vars)
               find $sourceRoot -type d -exec chmod 777 {} \;
-              cp ${pyprojectTemplate} $sourceRoot/pyproject.toml
+              cp ${pyprojectToml} $sourceRoot/pyproject.toml
               cp ${bannerTemplate} $sourceRoot/${banner_file}
               cp ${entrypointTemplate} $sourceRoot/entrypoint.sh
             '';
@@ -217,7 +217,7 @@
       in rec {
         apps = rec {
           default = poccac-default;
-          poccac-default = pythoneda-sandbox-poccac-python311;
+          poccac-default = pythoneda-sandbox-poccac-python312;
           pythoneda-sandbox-poccac-python38 = shared.app-for {
             package = self.packages.${system}.pythoneda-sandbox-poccac-python38;
             inherit entrypoint;
@@ -236,12 +236,17 @@
               self.packages.${system}.pythoneda-sandbox-poccac-python311;
             inherit entrypoint;
           };
+          pythoneda-sandbox-poccac-python312 = shared.app-for {
+            package =
+              self.packages.${system}.pythoneda-sandbox-poccac-python312;
+            inherit entrypoint;
+          };
         };
         defaultApp = apps.default;
         defaultPackage = packages.default;
         devShells = rec {
           default = pythoneda-sandbox-poccac-default;
-          pythoneda-sandbox-poccac-default = pythoneda-sandbox-poccac-python311;
+          pythoneda-sandbox-poccac-default = pythoneda-sandbox-poccac-python312;
           pythoneda-sandbox-poccac-python38 = shared.devShell-for {
             banner = "${
                 pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python38
@@ -298,10 +303,24 @@
               pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python311;
             inherit archRole layer org pkgs repo space;
           };
+          pythoneda-sandbox-poccac-python312 = shared.devShell-for {
+            banner = "${
+                pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python312
+              }/bin/banner.sh";
+            extra-namespaces = "";
+            nixpkgs-release = nixpkgsRelease;
+            package = packages.pythoneda-sandbox-poccac-python312;
+            python = pkgs.python312;
+            pythoneda-shared-pythonlang-banner =
+              pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python312;
+            pythoneda-shared-pythonlang-domain =
+              pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python312;
+            inherit archRole layer org pkgs repo space;
+          };
         };
         packages = rec {
           default = pythoneda-sandbox-poccac-default;
-          pythoneda-sandbox-poccac-default = pythoneda-sandbox-poccac-python311;
+          pythoneda-sandbox-poccac-default = pythoneda-sandbox-poccac-python312;
           pythoneda-sandbox-poccac-python38 = pythoneda-sandbox-poccac-for {
             python = pkgs.python38;
             pythoneda-shared-git-github =
@@ -353,6 +372,19 @@
               pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python311;
             stringtemplate3 =
               stringtemplate3.packages.${system}.stringtemplate3-python311;
+          };
+          pythoneda-sandbox-poccac-python312 = pythoneda-sandbox-poccac-for {
+            python = pkgs.python312;
+            pythoneda-shared-git-github =
+              pythoneda-shared-git-github.packages.${system}.pythoneda-shared-git-github-python312;
+            pythoneda-shared-git-shared =
+              pythoneda-shared-git-shared.packages.${system}.pythoneda-shared-git-shared-python312;
+            pythoneda-shared-pythonlang-banner =
+              pythoneda-shared-pythonlang-banner.packages.${system}.pythoneda-shared-pythonlang-banner-python312;
+            pythoneda-shared-pythonlang-domain =
+              pythoneda-shared-pythonlang-domain.packages.${system}.pythoneda-shared-pythonlang-domain-python312;
+            stringtemplate3 =
+              stringtemplate3.packages.${system}.stringtemplate3-python312;
           };
         };
       });

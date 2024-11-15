@@ -16,10 +16,15 @@ authors = [ @authors@ ]
 packages = [{include = "@package@"}]
 
 [tool.poetry.dependencies]
+hypothesis = "^@hypothesis@"
 python = "^@pythonMajorMinorVersion@"
-pythoneda-shared-banner = "^@pythonedaSharedBanner@"
-pythoneda-shared-domain = "^@pythonedaSharedDomain@"
-
+pythoneda-shared-git-github = "^@pythonedaSharedGitGithub@"
+pythoneda-shared-git-shared = "^@pythonedaSharedGitShared@"
+pythoneda-shared-pythonlang-banner = "^@pythonedaSharedPythonlangBanner@"
+pythoneda-shared-pythonlang-domain = "^@pythonedaSharedPythonlangDomain@"
+pytest = "^@pytest@"
+pytest-asyncio = "^@pytestAsyncio@"
+stringtemplate3 = "^@stringtemplate3@"
 
 [build-system]
 requires = ["poetry-core"]
