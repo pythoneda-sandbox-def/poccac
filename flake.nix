@@ -18,18 +18,16 @@
     flake-utils = { url = "github:numtide/flake-utils/v1.0.0"; };
     nixos = { url = "github:NixOS/nixpkgs/24.05"; };
     pythoneda-shared-git-github = {
-      url = "github:pythoneda-shared-git-def/github/0.0.7";
+      url = "github:pythoneda-shared-git-def/github/0.0.16";
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixos.follows = "nixos";
-      inputs.pythoneda-shared-git-shared.follows =
-        "pythoneda-shared-git-shared";
       inputs.pythoneda-shared-pythonlang-banner.follows =
         "pythoneda-shared-pythonlang-banner";
       inputs.pythoneda-shared-pythonlang-domain.follows =
         "pythoneda-shared-pythonlang-domain";
     };
     pythoneda-shared-git-shared = {
-      url = "github:pythoneda-shared-git-def/shared/0.0.41";
+      url = "github:pythoneda-shared-git-def/shared/0.0.54";
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixos.follows = "nixos";
       inputs.pythoneda-shared-pythonlang-banner.follows =
@@ -38,12 +36,12 @@
         "pythoneda-shared-pythonlang-domain";
     };
     pythoneda-shared-pythonlang-banner = {
-      url = "github:pythoneda-shared-pythonlang-def/banner/0.0.49";
+      url = "github:pythoneda-shared-pythonlang-def/banner/0.0.61";
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixos.follows = "nixos";
     };
     pythoneda-shared-pythonlang-domain = {
-      url = "github:pythoneda-shared-def/domain/0.0.37";
+      url = "github:pythoneda-shared-pythonlang-def/domain/0.0.64";
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixos.follows = "nixos";
       inputs.pythoneda-shared-pythonlang-banner.follows =
