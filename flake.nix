@@ -16,41 +16,41 @@
   description = "Proof of concept for code-as-code";
   inputs = rec {
     flake-utils = { url = "github:numtide/flake-utils/v1.0.0"; };
-    nixos = { url = "github:NixOS/nixpkgs/24.05"; };
+    nixpkgs = { url = "github:NixOS/nixpkgs/24.05"; };
     pythoneda-shared-git-github = {
-      url = "github:pythoneda-shared-git-def/github/0.0.16";
+      url = "github:pythoneda-shared-git-def/github/0.0.31";
       inputs.flake-utils.follows = "flake-utils";
-      inputs.nixos.follows = "nixos";
+      inputs.nixpkgs.follows = "nixpkgs";
       inputs.pythoneda-shared-pythonlang-banner.follows =
         "pythoneda-shared-pythonlang-banner";
       inputs.pythoneda-shared-pythonlang-domain.follows =
         "pythoneda-shared-pythonlang-domain";
     };
     pythoneda-shared-git-shared = {
-      url = "github:pythoneda-shared-git-def/shared/0.0.54";
+      url = "github:pythoneda-shared-git-def/shared/0.0.72";
       inputs.flake-utils.follows = "flake-utils";
-      inputs.nixos.follows = "nixos";
+      inputs.nixpkgs.follows = "nixpkgs";
       inputs.pythoneda-shared-pythonlang-banner.follows =
         "pythoneda-shared-pythonlang-banner";
       inputs.pythoneda-shared-pythonlang-domain.follows =
         "pythoneda-shared-pythonlang-domain";
     };
     pythoneda-shared-pythonlang-banner = {
-      url = "github:pythoneda-shared-pythonlang-def/banner/0.0.61";
+      url = "github:pythoneda-shared-pythonlang-def/banner/0.0.72";
       inputs.flake-utils.follows = "flake-utils";
-      inputs.nixos.follows = "nixos";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     pythoneda-shared-pythonlang-domain = {
-      url = "github:pythoneda-shared-pythonlang-def/domain/0.0.64";
+      url = "github:pythoneda-shared-pythonlang-def/domain/0.0.94";
       inputs.flake-utils.follows = "flake-utils";
-      inputs.nixos.follows = "nixos";
+      inputs.nixpkgs.follows = "nixpkgs";
       inputs.pythoneda-shared-pythonlang-banner.follows =
         "pythoneda-shared-pythonlang-banner";
     };
     stringtemplate3 = {
       inputs.flake-utils.follows = "flake-utils";
-      inputs.nixos.follows = "nixos";
-      url = "github:rydnr/nix-flakes/stringtemplate3-3.1b?dir=stringtemplate3";
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:rydnr/nix-flakes/stringtemplate3-3.1.2?dir=stringtemplate3";
     };
   };
   outputs = inputs:
@@ -78,11 +78,11 @@
         archRole = "B";
         space = "D";
         layer = "D";
-        nixosVersion = builtins.readFile "${nixos}/.version";
+        nixpkgsVersion = builtins.readFile "${nixpkgs}/.version";
         nixpkgsRelease =
-          builtins.replaceStrings [ "\n" ] [ "" ] "nixos-${nixosVersion}";
+          builtins.replaceStrings [ "\n" ] [ "" ] "nixpkgs-${nixpkgsVersion}";
         shared = import "${pythoneda-shared-pythonlang-banner}/nix/shared.nix";
-        pkgs = import nixos { inherit system; };
+        pkgs = import nixpkgs { inherit system; };
         pythoneda-sandbox-poccac-for = { python, pythoneda-shared-git-github
           , pythoneda-shared-git-shared, pythoneda-shared-pythonlang-banner
           , pythoneda-shared-pythonlang-domain, stringtemplate3 }:
