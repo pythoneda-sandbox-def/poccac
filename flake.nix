@@ -16,7 +16,7 @@
   description = "Proof of concept for code-as-code";
   inputs = rec {
     flake-utils = { url = "github:numtide/flake-utils/v1.0.0"; };
-    nixpkgs = { url = "github:NixOS/nixpkgs/24.05"; };
+    nixpkgs = { url = "github:NixOS/nixpkgs/release-24.11"; };
     pythoneda-shared-git-github = {
       url = "github:pythoneda-shared-git-def/github/0.0.31";
       inputs.flake-utils.follows = "flake-utils";
@@ -50,7 +50,7 @@
     stringtemplate3 = {
       inputs.flake-utils.follows = "flake-utils";
       inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:rydnr/nix-flakes/stringtemplate3-3.1.2?dir=stringtemplate3";
+      url = "github:rydnr/nix-flakes/stringtemplate3-3.1.4?dir=stringtemplate3";
     };
   };
   outputs = inputs:
@@ -116,7 +116,6 @@
                 pythoneda-shared-pythonlang-domain.version;
               pytest = python.pkgs.pytest.version;
               pytestAsyncio = python.pkgs.pytest-asyncio.version;
-              package = builtins.replaceStrings [ "." ] [ "/" ] pythonpackage;
               src = pyprojectTomlTemplate;
               stringtemplate3 = stringtemplate3.version;
             };
